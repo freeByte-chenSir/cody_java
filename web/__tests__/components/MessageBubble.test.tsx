@@ -13,13 +13,13 @@ describe("MessageBubble", () => {
     expect(screen.getByText("Hello")).toBeInTheDocument();
   });
 
-  it("renders assistant message with 'Cody' label", () => {
+  it("renders assistant message with 'Jody' label", () => {
     render(
       <MessageBubble
         message={{ role: "assistant", content: "Hi there!", timestamp: "" }}
       />
     );
-    expect(screen.getByText("Cody")).toBeInTheDocument();
+    expect(screen.getByText("Jody")).toBeInTheDocument();
     expect(screen.getByText("Hi there!")).toBeInTheDocument();
   });
 

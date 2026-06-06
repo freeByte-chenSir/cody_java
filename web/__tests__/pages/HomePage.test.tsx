@@ -40,7 +40,7 @@ describe("HomePage", () => {
         <HomePage />
       </MemoryRouter>
     );
-    expect(screen.getByText("Cody")).toBeInTheDocument();
+    expect(screen.getByText("Jody")).toBeInTheDocument();
     expect(screen.getByText("New Project")).toBeInTheDocument();
   });
 

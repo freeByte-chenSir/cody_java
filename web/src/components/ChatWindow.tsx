@@ -448,7 +448,7 @@ export default function ChatWindow({ projectId, projectName, sessionId }: Props)
         {/* Streaming bubble */}
         {hasStreamActivity && (
           <div className="message message-assistant">
-            <div className="message-role">Cody</div>
+            <div className="message-role">Jody</div>
 
             {streamThinking && (
               <details className="thinking-block" open>
@@ -653,7 +653,7 @@ export default function ChatWindow({ projectId, projectName, sessionId }: Props)
                 ? "Type your answer..."
                 : streaming
                   ? "Send a message to the running agent..."
-                  : "Ask Cody..."
+                  : "Ask Jody..."
           }
           disabled={configReady === false}
         />

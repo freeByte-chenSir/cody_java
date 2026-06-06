@@ -1,4 +1,4 @@
-# Cody Java 开发规范
+# Jody 开发规范
 
 > Open-source AI Coding Agent Framework — Java Implementation
 
@@ -17,28 +17,28 @@
 
 ```
 cody-java/
-├── cody-core/       # 框架核心引擎（不依赖任何接入层）
-├── cody-sdk/        # Java SDK（Builder 模式、事件流）
-├── cody-cli/        # CLI 命令行界面（Picocli）
-├── cody-web/        # Web 后端（Spring Boot）
+├── jody-core/       # 框架核心引擎（不依赖任何接入层）
+├── jody-sdk/        # Java SDK（Builder 模式、事件流）
+├── jody-cli/        # CLI 命令行界面（Picocli）
+├── jody-web/        # Web 后端（Spring Boot）
 └── web/             # Web 前端（React + TypeScript + Vite）
 ```
 
 **关键约束：**
-- `cody-core/` 内的代码 **不允许** 导入 `cody-cli/`、`cody-sdk/` 或 `cody-web/`
-- 所有接入层都通过 `cody-core/` 提供的接口工作
-- `cody-sdk/` 是一等公民模块，直接包装 core，提供 Builder 模式、事件流等高级 API
-- 新功能应该加在 `cody-core/`，然后在各接入层暴露
+- `jody-core/` 内的代码 **不允许** 导入 `jody-cli/`、`jody-sdk/` 或 `jody-web/`
+- 所有接入层都通过 `jody-core/` 提供的接口工作
+- `jody-sdk/` 是一等公民模块，直接包装 core，提供 Builder 模式、事件流等高级 API
+- 新功能应该加在 `jody-core/`，然后在各接入层暴露
 
 ### 依赖方向
 
 ```
-cody-cli/ ────→
-cody-web/ ────→  cody-core/*
-cody-sdk/   ──→  cody-core/*
+jody-cli/ ────→
+jody-web/ ────→  jody-core/*
+jody-sdk/   ──→  jody-core/*
 ```
 
-禁止反向依赖。禁止 `cody-core/` 依赖任何 CLI（Picocli）或 Web（Spring Boot）的库。
+禁止反向依赖。禁止 `jody-core/` 依赖任何 CLI（Picocli）或 Web（Spring Boot）的库。
 
 ---
 
@@ -61,7 +61,7 @@ cody-sdk/   ──→  cody-core/*
 mvn test
 
 # 运行单个模块测试
-mvn test -pl cody-core
+mvn test -pl jody-core
 
 # 运行匹配名称的测试
 mvn test -Dtest="GrepToolTest"
@@ -141,10 +141,10 @@ mvn test
 ## 新功能开发流程
 
 1. **先写测试** — 或至少同时写测试。不接受"先实现后面再补测试"
-2. **先在 core 实现** — 功能逻辑放在 `cody-core/`
-3. **SDK 暴露** — 在 `cody-sdk/` 包装 core 接口（如果需要）
-4. **Web Backend 端点** — 在 `cody-web/` 暴露 API（如果需要）
-5. **CLI 命令** — 在 `cody-cli/` 提供界面（如果需要）
+2. **先在 core 实现** — 功能逻辑放在 `jody-core/`
+3. **SDK 暴露** — 在 `jody-sdk/` 包装 core 接口（如果需要）
+4. **Web Backend 端点** — 在 `jody-web/` 暴露 API（如果需要）
+5. **CLI 命令** — 在 `jody-cli/` 提供界面（如果需要）
 6. **更新文档** — 同步更新所有相关的 `.md` 文档
 7. **运行测试** — 全部通过
 8. **编译验证** — 零错误
@@ -152,7 +152,7 @@ mvn test
 ### 示例：添加新工具
 
 ```
-1. 在 cody-core/src/.../tool/ 对应子包实现工具类（实现 CodyTool 接口）
+1. 在 jody-core/src/.../tool/ 对应子包实现工具类（实现 JodyTool 接口）
 2. 在 ToolRegistry.java 的 static 块中注册到对应的 *_TOOLS 列表
 3. 如果子 Agent 也要用，加到 SUB_AGENT_TOOLSETS 对应的 type 列表
 4. 写 3+ 个测试
@@ -168,10 +168,10 @@ mvn test
 
 | 模块 | 文件数 | 状态 |
 |------|--------|------|
-| cody-core | ~55 | 30 个工具，12 个子系统 |
-| cody-sdk | ~6 | Builder 模式，事件流 |
-| cody-cli | ~2 | Picocli 命令 |
-| cody-web | ~9 | Spring Boot REST + WebSocket |
+| jody-core | ~55 | 30 个工具，12 个子系统 |
+| jody-sdk | ~6 | Builder 模式，事件流 |
+| jody-cli | ~2 | Picocli 命令 |
+| jody-web | ~9 | Spring Boot REST + WebSocket |
 | web | ~17 | React + TypeScript SPA（6 页面） |
 
 **当前版本：v0.1.0（Java 版初始版本）**

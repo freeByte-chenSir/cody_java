@@ -6,10 +6,10 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="cody-core" />
-        <module name="cody-web" />
-        <module name="cody-sdk" />
-        <module name="cody-cli" />
+        <module name="jody-core" />
+        <module name="jody-web" />
+        <module name="jody-sdk" />
+        <module name="jody-cli" />
       </profile>
     </annotationProcessing>
   </component>

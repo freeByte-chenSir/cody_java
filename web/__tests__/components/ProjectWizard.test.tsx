@@ -50,7 +50,7 @@ describe("ProjectWizard", () => {
       })
       .mockResolvedValueOnce({
         path: "/home/user/projects",
-        entries: [{ name: "cody", is_dir: true }],
+        entries: [{ name: "jody", is_dir: true }],
       });
 
     render(<ProjectWizard onComplete={vi.fn()} />);
@@ -58,7 +58,7 @@ describe("ProjectWizard", () => {
     await userEvent.click(screen.getByText("projects/"));
     await waitFor(() => {
       expect(screen.getByText("/home/user/projects")).toBeInTheDocument();
-      expect(screen.getByText("cody/")).toBeInTheDocument();
+      expect(screen.getByText("jody/")).toBeInTheDocument();
     });
   });
 

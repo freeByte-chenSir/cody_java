@@ -1,14 +1,14 @@
-# Cody Java
+# Jody
 
 **开源 AI Coding Agent 框架** — Java 17 实现，构建、定制和部署你自己的 AI 编程 Agent。
 
-Cody 提供构建 AI 编程 Agent 所需的完整基础设施：**30 个工具、Agent Skills 开放标准、MCP/LSP 集成、子 Agent 编排、熔断器、跨任务记忆、会话管理和安全体系**。你可以用 SDK 将它嵌入任何 Java 应用，也可以直接用 CLI/Web 开箱即用。
+Jody 提供构建 AI 编程 Agent 所需的完整基础设施：**30 个工具、Agent Skills 开放标准、MCP/LSP 集成、子 Agent 编排、熔断器、跨任务记忆、会话管理和安全体系**。你可以用 SDK 将它嵌入任何 Java 应用，也可以直接用 CLI/Web 开箱即用。
 
 ---
 
-## 为什么选择 Cody？
+## 为什么选择 Jody？
 
-| 痛点 | Cody 怎么解决 |
+| 痛点 | Jody 怎么解决 |
 |------|--------------|
 | 想自建 AI 编码工具，但从零造轮子太重 | 30 个工具 + 熔断器 + 安全体系 + Sessions 全现成，专注你的业务逻辑 |
 | Claude Code / Cursor 不够灵活，想定制 Agent 行为 | Skills 系统 + 权限控制 + 多模型切换，完全可控 |
@@ -22,11 +22,11 @@ Cody 提供构建 AI 编程 Agent 所需的完整基础设施：**30 个工具�
 ### 方式一：SDK 嵌入（推荐）
 
 ```java
-// 引入依赖：com.cody:cody-sdk
-import com.cody.sdk.Cody;
-import com.cody.sdk.CodyClient;
+// 引入依赖：com.jody:jody-sdk
+import com.jody.sdk.Jody;
+import com.jody.sdk.JodyClient;
 
-CodyClient client = Cody.builder()
+JodyClient client = Jody.builder()
     .model("claude-sonnet-4-0")
     .apiKey("sk-ant-...")
     .workdir(Path.of("/project"))
@@ -43,31 +43,45 @@ SDK 直接调用核心引擎（in-process），无需启动任何服务。
 
 ```bash
 # 从源码构建
-mvn package -pl cody-cli -DskipTests
+mvn package -pl jody-cli -DskipTests
 
 # 配置模型
-java -jar cody-cli.jar config setup
+java -jar jody-cli.jar config setup
 
 # 执行任务
-java -jar cody-cli.jar run "创建一个 Spring Boot hello world 应用"
+java -jar jody-cli.jar run "创建一个 Spring Boot hello world 应用"
 
 # 交互对话
-java -jar cody-cli.jar chat
+java -jar jody-cli.jar chat
 ```
 
 ### 方式三：Web 界面
 
 ```bash
-# 终端 1: 启动后端
-mvn spring-boot:run -pl cody-web              # Spring Boot → http://localhost:8000
+# 1. 先编译安装
+mvn install -DskipTests
 
-# 终端 2: 启动前端
+# 2. 终端 1: 启动后端
+mvn spring-boot:run -pl jody-web              # Spring Boot → http://localhost:8000
+
+# 3. 终端 2: 启动前端
 cd web
-npm install
+npm install                                   # 首次需安装依赖
 npm run dev                                   # Vite → http://localhost:5173
 ```
 
-浏览器打开 `http://localhost:5173`，前端自动代理 API 请求到后端 8000 端口。
+浏览器打开 **`http://localhost:5173`**，直接进入聊天页面，无需创建 Project。
+
+**前端架构：**
+
+| 层级 | 说明 |
+|------|------|
+| 入口页面 | `ChatPage.tsx` — 直接聊天，使用默认项目 ID，跳过 Project 创建流程 |
+| 通信方式 | WebSocket `/ws/chat/{projectId}` — 双向流式消息 |
+| 代理配置 | Vite 自动将 `/api`、`/ws`、`/run` 等请求代理到后端 8000 端口 |
+| 路由 | `/` — 聊天页，`/skills` — 技能管理，`/settings` — 设置 |
+
+前端原本需要先创建 Project 才能聊天，现已改为**直接进入对话页**，与 CLI 的 `jody run` 体验一致。
 
 ---
 
@@ -99,16 +113,16 @@ npm run dev                                   # Vite → http://localhost:5173
 name: git
 description: Git 版本控制操作。处理 git 仓库时使用。
 metadata:
-  author: cody
+  author: jody
   version: "1.0"
 ---
 # Git 操作
 AI 代理的使用说明...
 ```
 
-**自定义技能：** 在 `.cody/skills/` 或 `~/.cody/skills/` 下创建 SKILL.md，AI 自动发现并按需加载。
+**自定义技能：** 在 `.jody/skills/` 或 `~/.jody/skills/` 下创建 SKILL.md，AI 自动发现并按需加载。
 
-**两层优先级：** `.cody/skills/`（项目）> `~/.cody/skills/`（用户）
+**两层优先级：** `.jody/skills/`（项目）> `~/.jody/skills/`（用户）
 
 ### 集成能力
 
@@ -132,7 +146,7 @@ AI 代理的使用说明...
 
 ## 三种使用方式
 
-Cody 的核心是 AI 编程引擎（`cody-core/`），以下三种方式共享同一个引擎：
+Jody 的核心是 AI 编程引擎（`jody-core/`），以下三种方式共享同一个引擎：
 
 | 方式 | 适用场景 |
 |------|---------|
@@ -146,10 +160,10 @@ Cody 的核心是 AI 编程引擎（`cody-core/`），以下三种方式共享�
 
 ```
 cody-java/
-├── cody-core/       # 框架核心引擎（30 工具 + 12 子系统）
-├── cody-sdk/        # Java SDK（Builder, Client, Events, Types）
-├── cody-cli/        # CLI 命令行（Picocli）
-├── cody-web/        # Web 后端（Spring Boot 3 + WebFlux）
+├── jody-core/       # 框架核心引擎（30 工具 + 12 子系统）
+├── jody-sdk/        # Java SDK（Builder, Client, Events, Types）
+├── jody-cli/        # CLI 命令行（Picocli）
+├── jody-web/        # Web 后端（Spring Boot 3 + WebFlux）
 └── web/             # Web 前端（React + TypeScript + Vite）
 ```
 
@@ -159,13 +173,13 @@ cody-java/
 
 ```bash
 # 环境变量
-export CODY_MODEL='claude-sonnet-4-0'
-export CODY_MODEL_API_KEY='sk-ant-...'
+export JODY_MODEL='claude-sonnet-4-0'
+export JODY_MODEL_API_KEY='sk-ant-...'
 
 # 使用 OpenAI 兼容 API
-export CODY_MODEL='gpt-4'
-export CODY_MODEL_BASE_URL='https://api.openai.com/v1/'
-export CODY_MODEL_API_KEY='sk-...'
+export JODY_MODEL='gpt-4'
+export JODY_MODEL_BASE_URL='https://api.openai.com/v1/'
+export JODY_MODEL_API_KEY='sk-...'
 ```
 
 ---

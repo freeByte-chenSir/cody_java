@@ -4,19 +4,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.cody</groupId>
-    <artifactId>cody-parent</artifactId>
+    <groupId>com.jody</groupId>
+    <artifactId>jody-parent</artifactId>
     <version>2.0.0</version>
     <packaging>pom</packaging>
 
-    <name>Cody Java - AI Coding Agent Framework</name>
+    <name>Jody - AI Coding Agent Framework</name>
     <description>Open-source AI Coding Agent Framework - Java implementation</description>
 
     <modules>
-        <module>cody-core</module>
-        <module>cody-sdk</module>
-        <module>cody-cli</module>
-        <module>cody-web</module>
+        <module>jody-core</module>
+        <module>jody-sdk</module>
+        <module>jody-cli</module>
+        <module>jody-web</module>
     </modules>
 
     <properties>

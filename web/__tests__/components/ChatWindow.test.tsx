@@ -20,7 +20,7 @@ describe("ChatWindow", () => {
 
   it("renders input field and send button", () => {
     render(<ChatWindow projectId="p1" projectName="Test" />);
-    expect(screen.getByPlaceholderText("Ask Cody...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Ask Jody...")).toBeInTheDocument();
     expect(screen.getByText("Send")).toBeInTheDocument();
   });
 

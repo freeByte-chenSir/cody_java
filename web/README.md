@@ -1,19 +1,17 @@
-# Cody Web — 项目管理 + 实时 AI 对话
+# Jody Web — 实时 AI 对话前端
 
-React SPA + FastAPI 后端，提供可视化的项目管理和实时 AI 编程助手对话。
+React SPA 前端，提供可视化的实时 AI 编程助手对话界面。后端为 Spring Boot（`jody-web/`）。
 
 ---
 
 ## 快速开始
 
 ```bash
-# 安装
-cd /path/to/cody
-pip install -e ".[dev]"
+# 安装依赖
 cd web && npm install
 
-# 开发模式 — 一条命令启动前后端（含 Vite HMR）
-cody-web --dev
+# 开发模式 — 启动 Vite HMR（后端需先启动 Spring Boot）
+npm run dev
 # 打开浏览器 → http://localhost:5173
 ```
 
@@ -21,7 +19,7 @@ cody-web --dev
 
 ```bash
 cd web && npm run build    # 输出到 web/dist/
-cody-web                   # 后端自动托管编译后的前端
+# 后端 Spring Boot 自动托管编译后的前端静态文件
 # 打开浏览器 → http://localhost:8000
 ```
 
@@ -32,13 +30,13 @@ cody-web                   # 后端自动托管编译后的前端
 ```
 浏览器 (React SPA, port 5173)
   │
-  ├── HTTP /api/*  ──→  FastAPI (port 8000)  ──→  cody.core
-  └── WS /ws/chat/*  ──→  FastAPI (port 8000)  ──→  AgentRunner.run_stream()
+  ├── HTTP /api/*  ──→  Spring Boot (port 8000)  ──→  Jody Core
+  └── WS /ws/chat/*  ──→  Spring Boot (port 8000)  ──→  AgentRunner
 ```
 
 - **前端** — React 18 + TypeScript + Vite，通过 Vite proxy 连接后端
-- **后端** — FastAPI 统一应用，直接 import `cody.core`（无 HTTP 中间层）
-- **数据库** — 项目存 `web.db`（SQLite），会话存 `~/.cody/sessions.db`
+- **后端** — Spring Boot 3 + WebFlux，直接调用 Jody Core（无 HTTP 中间层）
+- **数据库** — 会话存 `~/.jody/sessions.db`（SQLite）
 
 ---
 
@@ -63,33 +61,29 @@ web/src/
 
 ### 数据流
 
-1. **项目创建** — `ProjectWizard` 浏览目录 → 选择路径 → `POST /api/projects` → 自动创建 `.cody/` 和关联 session
+1. **项目创建** — `ProjectWizard` 浏览目录 → 选择路径 → `POST /api/projects` → 自动创建 `.jody/` 和关联 session
 2. **实时对话** — `ChatWindow` 建立 `WS /ws/chat/{projectId}` → 发送消息 → 接收流式事件（`text_delta` / `tool_call` / `done`）
-3. **会话持久化** — 每个项目绑定一个 Cody session，多轮对话自动保持上下文
+3. **会话持久化** — 每个项目绑定一个 Jody session，多轮对话自动保持上下文
 
 ---
 
 ## 后端结构
 
 ```
-web/backend/
-├── app.py               # FastAPI 应用（路由注册、中间件、SPA fallback）
-├── db.py                # ProjectStore（SQLite CRUD）
-├── models.py            # Pydantic 请求/响应模型
-├── state.py             # 单例状态管理（Config 缓存、各种 Store）
-├── helpers.py           # 流事件序列化、配置加载
-├── middleware.py         # 认证、限流、审计日志
-└── routes/
-    ├── projects.py       # 项目 CRUD
-    ├── chat.py           # WebSocket 对话代理
-    ├── directories.py    # 目录浏览
-    ├── run.py            # POST /run, /run/stream（Agent 执行）
-    ├── sessions.py       # 会话管理
-    ├── skills.py         # 技能管理
-    ├── tool.py           # 工具直调
-    ├── agents.py         # 子 Agent 管理
-    ├── websocket.py      # 通用 WebSocket（/ws）
-    └── audit_routes.py   # 审计日志查询
+jody-web/src/main/java/com/jody/web/
+├── JodyWebApplication.java    # Spring Boot 启动类
+├── config/
+│   └── AppState.java           # Spring Bean 单例状态管理
+├── controller/
+│   ├── RunController.java      # POST /run, /run/stream（Agent 执行）
+│   ├── SessionController.java  # 会话管理
+│   ├── ToolController.java     # 工具管理
+│   └── HealthController.java   # 健康检查
+├── ws/
+│   ├── ChatWebSocketHandler.java  # WebSocket 对话代理
+│   └── WebSocketConfig.java       # WebSocket 路由配置
+└── filter/
+    └── AuthFilter.java         # API Key / Bearer Token 鉴权
 ```
 
 ### 端点一览
@@ -125,10 +119,6 @@ web/backend/
 # 前端测试（Vitest + jsdom，33 个）
 cd web
 npx vitest run
-
-# 后端测试（Pytest，45 个）
-cd /path/to/cody
-PYTHONPATH=. python3 -m pytest web/tests/ -v
 ```
 
 | 测试文件 | 覆盖内容 |
@@ -157,18 +147,18 @@ PYTHONPATH=. python3 -m pytest web/tests/ -v
 | 样式 | CSS（暗色主题） |
 | Markdown | react-markdown + remark-gfm |
 | 前端测试 | Vitest + Testing Library |
-| 后端框架 | FastAPI + Uvicorn |
+| 后端框架 | Spring Boot 3 + WebFlux |
 | 数据库 | SQLite（WAL 模式） |
-| 后端测试 | Pytest + FastAPI TestClient |
+| 后端测试 | JUnit 5 + Spring Boot Test |
 
 ---
 
 ## 开发备注
 
 - Vite dev server（5173）通过 proxy 转发 `/api` 和 `/ws` 到后端（8000）
-- 生产构建后，后端自动托管 `web/dist/` 静态文件，并提供 SPA fallback
-- 后端直接 import `cody.core`，不经过 HTTP SDK — 零网络开销
-- 每个项目创建时会自动初始化 `.cody/config.json` 并创建关联的 Cody session
+- 生产构建后，后端 Spring Boot 自动托管 `web/dist/` 静态文件，并提供 SPA fallback
+- 后端直接调用 Jody Core，不经过 HTTP SDK — 零网络开销
+- 每个项目创建时会自动初始化 `.jody/config.json` 并创建关联的 Jody session
 - 流式状态栏 — 显示 Thinking/Running/Generating 状态 + 实时耗时 + Stop 按钮
 - WebSocket 断连恢复 — streaming 中 WS 断连时自动重置状态并提示 "Connection lost"
 - 空闲超时 — 120s 无事件自动停止 streaming，防止永久卡住

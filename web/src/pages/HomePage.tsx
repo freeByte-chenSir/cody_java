@@ -16,7 +16,7 @@ export default function HomePage() {
   return (
     <div className="home-page">
       <header className="home-header">
-        <h1>Cody</h1>
+        <h1>Jody</h1>
         <p>AI Coding Assistant</p>
       </header>
 

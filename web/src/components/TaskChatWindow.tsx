@@ -438,7 +438,7 @@ export default function TaskChatWindow({
 
         {hasStreamActivity && (
           <div className="message message-assistant">
-            <div className="message-role">Cody</div>
+            <div className="message-role">Jody</div>
             {streamThinking && (
               <details className="thinking-block" open>
                 <summary>Thinking...</summary>

@@ -19,7 +19,7 @@ export default function MessageBubble({ message }: { message: Message }) {
 
   return (
     <div className={`message ${isUser ? "message-user" : "message-assistant"}`}>
-      <div className="message-role">{isUser ? "You" : "Cody"}</div>
+      <div className="message-role">{isUser ? "You" : "Jody"}</div>
 
       {/* Thinking block (assistant only) */}
       {!isUser && message.thinking && (
