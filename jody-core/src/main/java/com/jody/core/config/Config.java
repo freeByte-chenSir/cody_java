@@ -25,8 +25,7 @@ public class Config {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    // ── Top-level fields ─────────────────────────────────────────────────
-
+    // ── Top-level fields ────────────────────────────────────────────────
     private String model = "claude-sonnet-4-0";
     private String modelBaseUrl;
     private String modelApiKey;

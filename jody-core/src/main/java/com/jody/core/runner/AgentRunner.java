@@ -6,9 +6,11 @@ import com.jody.core.deps.JodyDeps;
 import com.jody.core.error.JodyErrors.ToolError;
 import com.jody.core.prompt.SystemPrompt;
 import com.jody.core.tool.*;
+import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.*;
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.output.Response;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.tool.ToolExecutor;
 import dev.langchain4j.data.message.AiMessage;
@@ -129,20 +131,31 @@ public class AgentRunner {
         return run(prompt, null, null, null, null);
     }
 
-    /** Full run() with session, tool filtering, and cancellation. */
+    /**
+     * Full run() with session, tool filtering, and cancellation.
+     *
+     * TODO 跨 session 对话 (cross-session dialog):
+     *   1. 当 sessionId != null 时, 从 SessionStore.getMessages(sessionId) 加载历史消息,
+     *      注入到 messages 列表的 system prompt 之后、当前 user message 之前
+     *   2. run() 结束后, 将本轮新的 user/assistant/tool 消息通过 SessionStore.saveMessage() 持久化
+     *   3. 考虑消息数量上限 (如最近 100 条), 超出的做 LLM 摘要压缩或直接截断
+     *   4. stream() 方法同样需要支持 session 历史加载和持久化
+     *   5. 依赖: SessionStore 已可用 (~/.jody/sessions.db), saveMessage/getMessages 已实现
+     */
     public RunResult run(String prompt, String sessionId,
                           Set<String> includeTools, Set<String> excludeTools,
                           CountDownLatch cancelSignal) {
         CircuitBreaker.CircuitState cb = new CircuitBreaker.CircuitState();
 
         // Build messages
+        // TODO 加载历史消息: if (sessionId != null) messages.addAll(loadHistory(sessionId))
         List<ChatMessage> messages = new ArrayList<>();
         messages.add(SystemMessage.from(systemPrompt));
         messages.add(UserMessage.from(prompt));
 
         // Get tools
         List<JodyTool> tools = ToolRegistry.getTools(false, null, includeTools, excludeTools);
-        List<dev.langchain4j.agent.tool.ToolSpecification> toolSpecs = ToolRegistry.toLangChain4jSpecs(tools);
+        List<ToolSpecification> toolSpecs = ToolRegistry.toLangChain4jSpecs(tools);
 
         // Agent loop (max 50 iterations to prevent infinite loops)
         for (int i = 0; i < 50; i++) {
@@ -150,7 +163,7 @@ public class AgentRunner {
             CircuitBreaker.check(config.getCircuitBreaker(), cb);
 
             // Send to LLM
-            dev.langchain4j.model.output.Response<AiMessage> response;
+            Response<AiMessage> response;
             try {
                 response = llmModel.generate(messages, toolSpecs);
             } catch (Exception e) {
@@ -213,6 +226,7 @@ public class AgentRunner {
             }
 
             // No tool calls → final answer
+            // TODO 跨 session 对话: 将本轮 messages 持久化到 SessionStore
             return new RunResult(aiMsg.text(), null, List.of(), usage);
         }
 
@@ -227,6 +241,10 @@ public class AgentRunner {
      *   - Background thread runs the agent loop, puts events into a BlockingQueue
      *   - Caller consumes events from the queue iterator
      *
+     * TODO 跨 session 对话: stream() 目前不支持 sessionId 参数,
+     *      需新增 stream(String prompt, String sessionId) 重载,
+     *      加载历史消息 + 结束后持久化, 逻辑与 run() 一致
+     *
      * @return Iterator of StreamEvent (blocking)
      */
     public Iterator<StreamEvent> stream(String prompt) {
@@ -236,17 +254,18 @@ public class AgentRunner {
             try {
                 CircuitBreaker.CircuitState cb = new CircuitBreaker.CircuitState();
 
+                // TODO 跨 session 对话: 加载历史消息 + 结束后持久化, 与 run() 一致
                 List<ChatMessage> messages = new ArrayList<>();
                 messages.add(SystemMessage.from(systemPrompt));
                 messages.add(UserMessage.from(prompt));
 
                 List<JodyTool> tools = ToolRegistry.getTools(false, null, null, null);
-                List<dev.langchain4j.agent.tool.ToolSpecification> toolSpecs = ToolRegistry.toLangChain4jSpecs(tools);
+                List<ToolSpecification> toolSpecs = ToolRegistry.toLangChain4jSpecs(tools);
 
                 for (int i = 0; i < 50; i++) {
                     CircuitBreaker.check(config.getCircuitBreaker(), cb);
 
-                    dev.langchain4j.model.output.Response<AiMessage> response;
+                    Response<AiMessage> response;
                     try {
                         response = llmModel.generate(messages, toolSpecs);
                     } catch (Exception e) {
@@ -320,8 +339,8 @@ public class AgentRunner {
 
     // ── Retry with Backoff ────────────────────────────────────────────────
 
-    private dev.langchain4j.model.output.Response<AiMessage> retryWithBackoff(
-            List<ChatMessage> messages, List<dev.langchain4j.agent.tool.ToolSpecification> toolSpecs,
+    private Response<AiMessage> retryWithBackoff(
+            List<ChatMessage> messages, List<ToolSpecification> toolSpecs,
             Config.RetryConfig retryConfig) {
         if (!retryConfig.isEnabled()) return null;
 

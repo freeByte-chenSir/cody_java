@@ -57,9 +57,8 @@ public class Main implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        // Default: show help
-        CommandLine.usage(this, System.out);
-        return 0;
+        // Default: enter interactive chat (like `claude`)
+        return new CommandLine(new ChatCommand()).execute();
     }
 
     // ── Run Subcommand ──────────────────────────────────────────────

@@ -4,6 +4,7 @@ import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -47,7 +48,7 @@ public interface JodyTool {
      * Convert this tool to a LangChain4j ToolSpecification (for LLM request building).
      */
     default ToolSpecification toSpecification() {
-        dev.langchain4j.agent.tool.ToolSpecification.Builder builder = ToolSpecification.builder()
+        ToolSpecification.Builder builder = ToolSpecification.builder()
                 .name(getName())
                 .description(getDescription());
 
@@ -71,7 +72,7 @@ public interface JodyTool {
      */
     default Map<String, Object> toAnthropicToolDef() {
         Map<String, Object> props = getParametersSchema();
-        java.util.List<String> required = getRequiredParameters();
+        List<String> required = getRequiredParameters();
 
         Map<String, Object> inputSchema = new java.util.LinkedHashMap<>();
         inputSchema.put("type", "object");
